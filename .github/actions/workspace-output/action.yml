@@ -3,8 +3,8 @@
 
 # INTERNAL USE ONLY
 # Refer to https://github.com/hashicorp/tfc-workflows-github for available actions
-name: 'Test Plan Output'
-description: "Returns the plan details for the provided Plan ID"
+name: "Test Workspace Output"
+description: "Returns JSON array of the latest state-version output(s) for a given HCP Terraform workspace."
 
 inputs:
   # global flags
@@ -20,35 +20,25 @@ inputs:
     required: false
     description: "The name of the organization in HCP Terraform. Defaults to reading `TF_CLOUD_ORGANIZATION` environment variable"
     default: ""
-  ## required
-  plan:
-    description: "The plan ID to retrieve plan details and JSON execution plan."
+  # required
+  workspace:
     required: true
+    description: "The name of the workspace to create the new configuration version in."
 
 outputs:
   status:
     description: "The result of the operation. Possible values are `Success`, `Error` or `Timeout`"
-  add:
-    description: "Resource Additions from the HCP Terraform plan."
-  change:
-    description: "Resource Changes from the HCP Terraform plan."
-  destroy:
-    description: "Resource Destructions from the HCP Terraform plan."
-  plan_id:
-    description: "The provided plan ID."
-  plan_status:
-    description: "The status of the Plan."
+  outputs:
+    description: "JSON array containing the workspace outputs. Sensitive values are redacted."
 
 runs:
   using: docker
-  image: ../../../Dockerfile
+  image: ghcr.io/Trampoline-CX/tfc-workflows-tooling/tfci:latest
   args:
-  - tfci
-  ## global flags
-  - -hostname=${{ inputs.hostname }}
-  - -token=${{ inputs.token }}
-  - -organization=${{ inputs.organization }}
-  ## command
-  - plan
-  - output
-  - -plan=${{ inputs.plan }}
+    ## global flags
+    - -hostname=${{ inputs.hostname }}
+    - -token=${{ inputs.token }}
+    - -organization=${{ inputs.organization }}
+    ## command arguments
+    - workspace ouput list
+    - -workspace=${{ inputs.workspace }}

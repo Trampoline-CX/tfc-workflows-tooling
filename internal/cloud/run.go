@@ -60,6 +60,7 @@ type CreateRunOptions struct {
 	PlanOnly               bool
 	IsDestroy              bool
 	SavePlan               bool
+	AsyncNoLog             bool
 	RunVariables           []*tfe.RunVariable
 	TargetAddrs            []string
 }
@@ -178,6 +179,11 @@ func (service *runService) CreateRun(ctx context.Context, options CreateRunOptio
 	desiredStatus := getDesiredRunStatus(run, policyChecksEnabled, costEstimateEnabled)
 
 	log.Printf("[DEBUG] PlanOnly: %t, AutoApply: %t, CostEstimation: %t, PolicyChecks: %t", run.PlanOnly, run.AutoApply, costEstimateEnabled, policyChecksEnabled)
+
+	if options.AsyncNoLog {
+		log.Printf("[DEBUG] AsyncNoLog: %t, not logging the run output", options.AsyncNoLog)
+		return run, nil
+	}
 
 	retryErr := retry.Do(ctx, defaultBackoff(), func(ctx context.Context) error {
 		log.Printf("[DEBUG] Monitoring run status...")
