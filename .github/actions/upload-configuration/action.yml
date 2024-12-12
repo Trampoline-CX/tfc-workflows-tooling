@@ -51,14 +51,13 @@ runs:
   using: docker
   image: ../../../Dockerfile
   args:
-  - tfci
-  ## global flags
-  - -hostname=${{ inputs.hostname }}
-  - -token=${{ inputs.token }}
-  - -organization=${{ inputs.organization }}
-  ## command arguments
-  - upload
-  - -workspace=${{ inputs.workspace }}
-  - -directory=${{ inputs.directory }}
-  - -speculative=${{ inputs.speculative }}
-  - -provisional=${{ inputs.provisional }}
+    ## global flags
+    - -hostname=${{ inputs.hostname }}
+    - -token=${{ inputs.token }}
+    - -organization=${{ inputs.organization }}
+    ## command arguments
+    - upload
+    - -workspace=${{ inputs.workspace }}
+    - -directory=${{ inputs.directory }}
+    - -speculative=${{ inputs.speculative }}
+    - -provisional=${{ inputs.provisional }}

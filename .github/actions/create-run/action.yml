@@ -3,7 +3,7 @@
 
 # INTERNAL USE ONLY
 # Refer to https://github.com/hashicorp/tfc-workflows-github for available actions
-name: 'Test Create Run'
+name: "Test Create Run"
 description: "Performs a new plan run in HCP Terraform, using a configuration version and the workspace’s current variables"
 
 inputs:
@@ -69,16 +69,15 @@ runs:
   using: docker
   image: ../../../Dockerfile
   args:
-  - tfci
-  ## global flags
-  - -hostname=${{ inputs.hostname }}
-  - -token=${{ inputs.token }}
-  - -organization=${{ inputs.organization }}
-  ## command
-  - run
-  - create
-  - -workspace=${{ inputs.workspace }}
-  - -configuration_version=${{ inputs.configuration_version }}
-  - -message=${{ inputs.message }}
-  - -plan-only=${{ inputs.plan_only }}
-  - -save-plan=${{ inputs.save_plan }}
+    ## global flags
+    - -hostname=${{ inputs.hostname }}
+    - -token=${{ inputs.token }}
+    - -organization=${{ inputs.organization }}
+    ## command
+    - run
+    - create
+    - -workspace=${{ inputs.workspace }}
+    - -configuration_version=${{ inputs.configuration_version }}
+    - -message=${{ inputs.message }}
+    - -plan-only=${{ inputs.plan_only }}
+    - -save-plan=${{ inputs.save_plan }}
