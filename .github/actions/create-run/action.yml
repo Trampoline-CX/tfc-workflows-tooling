@@ -40,6 +40,10 @@ inputs:
     required: false
     description: "Specifies whether to create a saved plan. Saved-plan runs perform their plan and checks immediately, but won't lock the workspace and become its current run until they are confirmed for apply."
     default: "false"
+  async_no_log:
+    required: false
+    description: "Specifies whether to run the plan asynchronously and not log the plan output."
+    default: "false"
 
 outputs:
   status:
@@ -81,3 +85,4 @@ runs:
     - -message=${{ inputs.message }}
     - -plan-only=${{ inputs.plan_only }}
     - -save-plan=${{ inputs.save_plan }}
+    - -async-no-log=${{ inputs.async_no_log }}
