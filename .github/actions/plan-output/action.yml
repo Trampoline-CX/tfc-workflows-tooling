@@ -41,7 +41,7 @@ outputs:
 
 runs:
   using: docker
-  image: ../../../Dockerfile
+  image: ghcr.io/Trampoline-CX/tfc-workflows-tooling/tfci:latest
   args:
     ## global flags
     - -hostname=${{ inputs.hostname }}
