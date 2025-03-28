@@ -1,10 +1,9 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package environment
 
 import (
 	"fmt"
+	"log"
+	"maps"
 	"os"
 	"strings"
 )
@@ -29,11 +28,11 @@ type GitHubContext struct {
 	refType string
 	// The path to a temporary directory on the runner. This directory is emptied at the beginning and end of each job. Note that files will not be removed if the runner's user account does not have permission to delete them.
 	runnerTemp string
-	// path to ::set-output
+	// path to output file for GitHub Actions
 	githubOutput string
-	// data sent to GITHUB_OUTPUT
+	// data accumulated for output
 	output OutputMap
-	//
+	// unique delimiter for multiline outputs
 	fileDelimeter string
 }
 
@@ -60,44 +59,69 @@ func (gh *GitHubContext) WriteDir() string {
 }
 
 func (gh *GitHubContext) SetOutput(output OutputMap) {
-	gh.output = output
+	if gh.output == nil {
+		gh.output = make(map[string]OutputWriter)
+	}
+
+	maps.Copy(gh.output, output)
 }
 
 func (gh *GitHubContext) CloseOutput() (retErr error) {
-	filepath := gh.githubOutput
-	file, err := os.OpenFile(filepath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if gh.githubOutput == "" {
+		log.Printf("[ERROR] GITHUB_OUTPUT environment variable not set")
+		return fmt.Errorf("GITHUB_OUTPUT environment variable not set")
+	}
+
+	file, err := os.OpenFile(gh.githubOutput, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		retErr = err
-		return
+		log.Printf("[ERROR] Failed to open GitHub output file: %s", err)
+		return err
 	}
-
-	data := []string{}
-	for k, v := range gh.output {
-		data = append(data, multiLineStrVal(gh.fileDelimeter, k, v.String()))
-	}
-	out := []byte(strings.Join(data, EOF))
-
 	defer func() {
 		if err := file.Close(); err != nil {
+			log.Printf("[ERROR] Failed to close GitHub output file: %s", err)
 			retErr = err
 		}
 	}()
 
-	if _, err := file.Write(out); err != nil {
-		retErr = err
-		return
+	log.Printf("[DEBUG] Writing %d outputs to GitHub output file", len(gh.output))
+
+	for key, value := range gh.output {
+		strValue := value.String()
+
+		var outputLine string
+		if value.MultiLine() || strings.Contains(strValue, "\n") {
+			outputLine = fmt.Sprintf("%s<<%s%s%s%s%s",
+				key,
+				gh.fileDelimeter,
+				EOF,
+				strValue,
+				EOF,
+				gh.fileDelimeter)
+		} else {
+			outputLine = fmt.Sprintf("%s=%s%s", key, strValue, EOF)
+		}
+
+		if _, err := file.WriteString(outputLine); err != nil {
+			log.Printf("[ERROR] Failed to write output '%s': %s", key, err)
+			retErr = err
+			return
+		}
+
+		log.Printf("[DEBUG] Wrote output: %s", key)
 	}
 
-	// reset output
 	gh.output = make(map[string]OutputWriter)
-
 	return
 }
 
 func newGitHubContext(getenv GetEnv) *GitHubContext {
+	runId := getenv("GITHUB_RUN_ID")
+	runNumber := getenv("GITHUB_RUN_NUMBER")
+
 	ghCtx := &GitHubContext{
-		runId:        getenv("GITHUB_RUN_ID"),
-		runNumber:    getenv("GITHUB_RUN_NUMBER"),
+		runId:        runId,
+		runNumber:    runNumber,
 		commitSHA:    getenv("GITHUB_SHA"),
 		actor:        getenv("GITHUB_ACTOR"),
 		repository:   getenv("GITHUB_REPOSITORY"),
@@ -107,11 +131,12 @@ func newGitHubContext(getenv GetEnv) *GitHubContext {
 		runnerTemp:   getenv("RUNNER_TEMP"),
 		output:       make(map[string]OutputWriter),
 	}
-	// set random/unique to each github action runner
-	ghCtx.fileDelimeter = fmt.Sprintf("_GH%s%sFD_", ghCtx.runId, ghCtx.runNumber)
-	return ghCtx
-}
 
-func multiLineStrVal(fileD, k, v string) string {
-	return fmt.Sprintf("%s<<"+fileD+EOF+"%s"+EOF+fileD, k, v)
+	ghCtx.fileDelimeter = fmt.Sprintf("GHDELIM_%s_%s_%d", runId, runNumber, os.Getpid())
+
+	if ghCtx.githubOutput == "" {
+		log.Printf("[WARN] GITHUB_OUTPUT environment variable is not set. Outputs will not be available in GitHub Actions.")
+	}
+
+	return ghCtx
 }

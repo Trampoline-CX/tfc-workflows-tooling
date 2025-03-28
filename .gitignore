@@ -54,3 +54,6 @@ terraform.rc
 
 # Ignore binary
 tfci
+
+# Repomix output ignore
+repomix-output.txt
