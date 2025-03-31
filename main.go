@@ -6,7 +6,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"runtime"
 
@@ -28,9 +27,9 @@ func main() {
 
 	// setup logging
 	logging.SetupLogger(&logging.LoggerOptions{
-		PlatformType: env.PlatformType,
+		PlatformType: string(env.PlatformType),
 	})
-	
+
 	// Ensure logs are flushed on exit
 	defer func() {
 		if err := logging.Sync(); err != nil {
@@ -56,8 +55,8 @@ func main() {
 }
 
 func realMain() int {
-	logging.Info("Starting application", 
-		"version", version.GetVersion(), 
+	logging.Info("Starting application",
+		"version", version.GetVersion(),
 		"go_version", runtime.Version())
 
 	logging.Debug("Preparing runner")

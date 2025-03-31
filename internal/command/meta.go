@@ -8,7 +8,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 
 	"github.com/hashicorp/tfci/internal/cloud"
 	"github.com/hashicorp/tfci/internal/environment"
@@ -64,7 +64,7 @@ func (c *Meta) setupCmd(args []string, flags *flag.FlagSet) error {
 
 func (c *Meta) flagSet(name string) *flag.FlagSet {
 	f := flag.NewFlagSet(name, flag.ContinueOnError)
-	f.SetOutput(ioutil.Discard)
+	f.SetOutput(io.Discard)
 	f.Usage = func() {}
 
 	f.BoolVar(&c.json, "json", false, "Suppresses all logs and instead returns output value in JSON format")
@@ -101,15 +101,6 @@ func (c *Meta) addOutputWithOpts(name string, value interface{}, opts *outputOpt
 	c.messages[name] = newOutputMessage(name, value, opts)
 }
 
-// Helper function to get output keys for logging
-func getOutputKeys(outputs environment.OutputMap) []string {
-	keys := make([]string, 0, len(outputs))
-	for k := range outputs {
-		keys = append(keys, k)
-	}
-	return keys
-}
-
 // returns json result string, containing all outputs
 // if running in ci, will send outputs to platform
 func (c *Meta) closeOutput() string {
@@ -140,8 +131,14 @@ func (c *Meta) closeOutput() string {
 
 	// check to see if we're running in CI environment
 	if c.env.Context != nil {
+		// Extract keys for logging
+		keys := make([]string, 0, len(platOutput))
+		for k := range platOutput {
+			keys = append(keys, k)
+		}
+
 		// Log outputs for debugging
-		logging.Debug("Setting platform outputs", "keys", getOutputKeys(platOutput))
+		logging.Debug("Setting platform outputs", "keys", keys)
 
 		// pass output data and close signifying we're done
 		c.env.Context.SetOutput(platOutput)

@@ -4,12 +4,10 @@
 package logging
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"strings"
 
-	"github.com/hashicorp/tfci/internal/environment"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -34,7 +32,7 @@ var (
 
 // LoggerOptions holds configuration for the logger
 type LoggerOptions struct {
-	PlatformType environment.PlatformType
+	PlatformType string
 }
 
 // parseLogLevel converts string level to zapcore.Level
@@ -101,7 +99,7 @@ func SetupLogger(options *LoggerOptions) {
 	logger = zap.New(core, 
 		zap.AddCaller(), 
 		zap.AddCallerSkip(1),
-		zap.Fields(zap.String("platform", string(options.PlatformType))),
+		zap.Fields(zap.String("platform", options.PlatformType)),
 	)
 
 	// Create sugared logger for convenience methods
@@ -132,6 +130,11 @@ func GetSugaredLogger() *zap.SugaredLogger {
 
 // Debug logs a message at debug level
 func Debug(msg string, args ...interface{}) {
+	if logger == nil {
+		log.Printf("[DEBUG] %s", msg)
+		return
+	}
+	
 	if len(args) == 0 {
 		sugar.Debug(msg)
 	} else if len(args)%2 == 0 {
@@ -143,6 +146,11 @@ func Debug(msg string, args ...interface{}) {
 
 // Info logs a message at info level
 func Info(msg string, args ...interface{}) {
+	if logger == nil {
+		log.Printf("[INFO] %s", msg)
+		return
+	}
+	
 	if len(args) == 0 {
 		sugar.Info(msg)
 	} else if len(args)%2 == 0 {
@@ -154,6 +162,11 @@ func Info(msg string, args ...interface{}) {
 
 // Warn logs a message at warn level
 func Warn(msg string, args ...interface{}) {
+	if logger == nil {
+		log.Printf("[WARN] %s", msg)
+		return
+	}
+	
 	if len(args) == 0 {
 		sugar.Warn(msg)
 	} else if len(args)%2 == 0 {
@@ -165,6 +178,11 @@ func Warn(msg string, args ...interface{}) {
 
 // Error logs a message at error level
 func Error(msg string, args ...interface{}) {
+	if logger == nil {
+		log.Printf("[ERROR] %s", msg)
+		return
+	}
+	
 	if len(args) == 0 {
 		sugar.Error(msg)
 	} else if len(args)%2 == 0 {
@@ -176,5 +194,8 @@ func Error(msg string, args ...interface{}) {
 
 // Sync flushes any buffered log entries
 func Sync() error {
+	if logger == nil {
+		return nil
+	}
 	return logger.Sync()
 }

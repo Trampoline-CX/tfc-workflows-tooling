@@ -10,7 +10,11 @@ require (
 	go.uber.org/mock v0.5.0
 )
 
-require golang.org/x/sync v0.10.0 // indirect
+require (
+	go.uber.org/multierr v1.11.0 // indirect
+	go.uber.org/zap v1.27.0 // indirect
+	golang.org/x/sync v0.10.0 // indirect
+)
 
 require (
 	github.com/Masterminds/goutils v1.1.1 // indirect

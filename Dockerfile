@@ -28,4 +28,7 @@ COPY --from=builder /bin/app /usr/local/bin/tfci
 
 USER tfciuser
 
+ENV TF_LOG=INFO \
+  TF_FORMAT=CONSOLE
+
 ENTRYPOINT ["/usr/local/bin/tfci"]

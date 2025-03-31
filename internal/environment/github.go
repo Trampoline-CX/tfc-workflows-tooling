@@ -139,7 +139,7 @@ func newGitHubContext(getenv GetEnv) *GitHubContext {
 	githubOutput := getenv("GITHUB_OUTPUT")
 
 	// Log all GitHub environment variables for debugging
-	logging.Debug("GitHub environment variables", 
+	logging.Debug("GitHub environment variables",
 		"GITHUB_RUN_ID", runId,
 		"GITHUB_RUN_NUMBER", runNumber,
 		"GITHUB_OUTPUT", githubOutput,
