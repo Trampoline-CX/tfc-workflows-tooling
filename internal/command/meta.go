@@ -9,10 +9,10 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"log"
 
 	"github.com/hashicorp/tfci/internal/cloud"
 	"github.com/hashicorp/tfci/internal/environment"
+	"github.com/hashicorp/tfci/internal/logging"
 )
 
 type Status string
@@ -101,6 +101,15 @@ func (c *Meta) addOutputWithOpts(name string, value interface{}, opts *outputOpt
 	c.messages[name] = newOutputMessage(name, value, opts)
 }
 
+// Helper function to get output keys for logging
+func getOutputKeys(outputs environment.OutputMap) []string {
+	keys := make([]string, 0, len(outputs))
+	for k := range outputs {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
 // returns json result string, containing all outputs
 // if running in ci, will send outputs to platform
 func (c *Meta) closeOutput() string {
@@ -121,7 +130,7 @@ func (c *Meta) closeOutput() string {
 			val, err := m.Value()
 			// if error, add to logger
 			if err != nil {
-				log.Printf("[ERROR] problem writing output: '%s', with: %s", m.name, err.Error())
+				logging.Error("Problem writing output", "name", m.name, "error", err)
 				// don't include value if issue serializing value
 				continue
 			}
@@ -132,20 +141,21 @@ func (c *Meta) closeOutput() string {
 	// check to see if we're running in CI environment
 	if c.env.Context != nil {
 		// Log outputs for debugging
-		log.Printf("[DEBUG] Setting platform outputs: %v", platOutput)
+		logging.Debug("Setting platform outputs", "keys", getOutputKeys(platOutput))
 
 		// pass output data and close signifying we're done
 		c.env.Context.SetOutput(platOutput)
 		if err := c.env.Context.CloseOutput(); err != nil {
-			log.Printf("[ERROR] Failed to close platform output: %s", err)
+			logging.Error("Failed to close platform output", "error", err)
 		} else {
-			log.Printf("[DEBUG] Successfully closed platform output")
+			logging.Debug("Successfully closed platform output")
 		}
 	}
 
 	outJson, err := json.MarshalIndent(stdOutput, "", "  ")
 	if err != nil {
-		return string(err.Error())
+		logging.Error("Failed to marshal JSON output", "error", err)
+		return err.Error()
 	}
 	return string(outJson)
 }

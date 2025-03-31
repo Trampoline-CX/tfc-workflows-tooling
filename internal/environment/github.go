@@ -2,10 +2,11 @@ package environment
 
 import (
 	"fmt"
-	"log"
 	"maps"
 	"os"
 	"strings"
+
+	"github.com/hashicorp/tfci/internal/logging"
 )
 
 const EOF = "\n"
@@ -68,29 +69,29 @@ func (gh *GitHubContext) SetOutput(output OutputMap) {
 
 func (gh *GitHubContext) CloseOutput() (retErr error) {
 	if gh.githubOutput == "" {
-		log.Printf("[ERROR] GITHUB_OUTPUT environment variable not set")
+		logging.Error("GITHUB_OUTPUT environment variable not set")
 		return fmt.Errorf("GITHUB_OUTPUT environment variable not set")
 	}
 
 	file, err := os.OpenFile(gh.githubOutput, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		log.Printf("[ERROR] Failed to open GitHub output file: %s", err)
+		logging.Error("Failed to open GitHub output file", "error", err)
 		return err
 	}
 	defer func() {
 		if err := file.Close(); err != nil {
-			log.Printf("[ERROR] Failed to close GitHub output file: %s", err)
+			logging.Error("Failed to close GitHub output file", "error", err)
 			retErr = err
 		}
 	}()
 
-	log.Printf("[DEBUG] Writing %d outputs to GitHub output file", len(gh.output))
+	logging.Debug("Writing outputs to GitHub output file", "count", len(gh.output))
 
 	for key, value := range gh.output {
 		strValue := value.String()
 
 		// Log each output value for troubleshooting
-		log.Printf("[DEBUG] Output value for '%s': '%s'", key, strValue)
+		logging.Debug("Setting GitHub output", "key", key, "value", strValue)
 
 		var outputLine string
 		if value.MultiLine() || strings.Contains(strValue, "\n") {
@@ -107,17 +108,17 @@ func (gh *GitHubContext) CloseOutput() (retErr error) {
 		}
 
 		if _, err := file.WriteString(outputLine); err != nil {
-			log.Printf("[ERROR] Failed to write output '%s': %s", key, err)
+			logging.Error("Failed to write output", "key", key, "error", err)
 			retErr = err
 			return
 		}
 
-		log.Printf("[DEBUG] Wrote output: %s", key)
+		logging.Debug("Successfully wrote output", "key", key)
 	}
 
 	// Ensure data is flushed to disk before returning
 	if err := file.Sync(); err != nil {
-		log.Printf("[ERROR] Failed to sync GitHub output file: %s", err)
+		logging.Error("Failed to sync GitHub output file", "error", err)
 		if retErr == nil {
 			retErr = err
 		}
@@ -138,14 +139,15 @@ func newGitHubContext(getenv GetEnv) *GitHubContext {
 	githubOutput := getenv("GITHUB_OUTPUT")
 
 	// Log all GitHub environment variables for debugging
-	log.Printf("[DEBUG] GitHub environment - GITHUB_RUN_ID: %s", runId)
-	log.Printf("[DEBUG] GitHub environment - GITHUB_RUN_NUMBER: %s", runNumber)
-	log.Printf("[DEBUG] GitHub environment - GITHUB_OUTPUT: %s", githubOutput)
-	log.Printf("[DEBUG] GitHub environment - GITHUB_SHA: %s", getenv("GITHUB_SHA"))
-	log.Printf("[DEBUG] GitHub environment - GITHUB_ACTOR: %s", getenv("GITHUB_ACTOR"))
-	log.Printf("[DEBUG] GitHub environment - GITHUB_REPOSITORY: %s", getenv("GITHUB_REPOSITORY"))
-	log.Printf("[DEBUG] GitHub environment - GITHUB_REF_NAME: %s", getenv("GITHUB_REF_NAME"))
-	log.Printf("[DEBUG] GitHub environment - GITHUB_REF_TYPE: %s", getenv("GITHUB_REF_TYPE"))
+	logging.Debug("GitHub environment variables", 
+		"GITHUB_RUN_ID", runId,
+		"GITHUB_RUN_NUMBER", runNumber,
+		"GITHUB_OUTPUT", githubOutput,
+		"GITHUB_SHA", getenv("GITHUB_SHA"),
+		"GITHUB_ACTOR", getenv("GITHUB_ACTOR"),
+		"GITHUB_REPOSITORY", getenv("GITHUB_REPOSITORY"),
+		"GITHUB_REF_NAME", getenv("GITHUB_REF_NAME"),
+		"GITHUB_REF_TYPE", getenv("GITHUB_REF_TYPE"))
 
 	ghCtx := &GitHubContext{
 		runId:        runId,
@@ -163,12 +165,12 @@ func newGitHubContext(getenv GetEnv) *GitHubContext {
 	ghCtx.fileDelimeter = fmt.Sprintf("GHDELIM_%s_%s_%d", runId, runNumber, os.Getpid())
 
 	if ghCtx.githubOutput == "" {
-		log.Printf("[WARN] GITHUB_OUTPUT environment variable is not set. Outputs will not be available in GitHub Actions.")
+		logging.Warn("GITHUB_OUTPUT environment variable is not set. Outputs will not be available in GitHub Actions.")
 
 		// Fallback to legacy GITHUB_ENV if available (for older Actions versions)
 		legacyEnv := getenv("GITHUB_ENV")
 		if legacyEnv != "" {
-			log.Printf("[INFO] Using GITHUB_ENV as fallback for outputs: %s", legacyEnv)
+			logging.Info("Using GITHUB_ENV as fallback for outputs", "path", legacyEnv)
 			ghCtx.githubOutput = legacyEnv
 		}
 	}

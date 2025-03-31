@@ -5,10 +5,10 @@ package main
 
 import (
 	"flag"
-	"log"
 	"os"
 
 	"github.com/hashicorp/tfci/internal/cloud"
+	"github.com/hashicorp/tfci/internal/logging"
 	"github.com/hashicorp/tfci/internal/writer"
 	"github.com/hashicorp/tfci/version"
 
@@ -24,7 +24,7 @@ var (
 
 func newCliRunner() (*cli.CLI, error) {
 	args := os.Args[1:]
-	log.Printf("[DEBUG] Command argument count: %d", len(args))
+	logging.Debug("Processing command arguments", "count", len(args))
 
 	err := flag.CommandLine.Parse(args)
 	if err != nil {
@@ -42,11 +42,13 @@ func newCliRunner() (*cli.CLI, error) {
 	if *organizationFlag == "" && orgEnv != "" {
 		*organizationFlag = orgEnv
 	}
-	log.Printf("[DEBUG] Subcommand arg count: %d for organization: %s", len(newArgs), orgEnv)
+	logging.Debug("Subcommand details", 
+		"arg_count", len(newArgs), 
+		"organization", orgEnv)
 
 	tfe, err := cloud.NewTfeClient(*hostnameFlag, *tokenFlag, string(env.PlatformType))
 	if err != nil {
-		log.Printf("[ERROR] Could not initialize HCP Terraform client, error: %#v", err)
+		logging.Error("Failed to initialize HCP Terraform client", "error", err)
 		return nil, err
 	}
 

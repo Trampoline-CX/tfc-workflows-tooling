@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"runtime"
@@ -29,6 +30,14 @@ func main() {
 	logging.SetupLogger(&logging.LoggerOptions{
 		PlatformType: env.PlatformType,
 	})
+	
+	// Ensure logs are flushed on exit
+	defer func() {
+		if err := logging.Sync(); err != nil {
+			// Don't use logging here to avoid circular references
+			fmt.Fprintf(os.Stderr, "Failed to sync logger: %v\n", err)
+		}
+	}()
 
 	// Ui settings
 	Ui = &cli.ColoredUi{
@@ -47,19 +56,22 @@ func main() {
 }
 
 func realMain() int {
-	log.Printf("[INFO] version: %s", version.GetVersion())
-	log.Printf("[INFO] Go runtime version: %s", runtime.Version())
+	logging.Info("Starting application", 
+		"version", version.GetVersion(), 
+		"go_version", runtime.Version())
 
-	log.Printf("[DEBUG] Preparing runner")
+	logging.Debug("Preparing runner")
 	cliRunner, runError := newCliRunner()
 	if runError != nil {
+		logging.Error("Failed to create CLI runner", "error", runError)
 		Ui.Error(runError.Error())
 		return 1
 	}
 
-	log.Printf("[DEBUG] Running command")
+	logging.Debug("Running command")
 	exitCode, err := cliRunner.Run()
 	if err != nil {
+		logging.Error("Command execution failed", "error", err)
 		Ui.Error(err.Error())
 		return 1
 	}
