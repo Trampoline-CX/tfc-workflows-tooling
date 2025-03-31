@@ -112,6 +112,14 @@ func (gh *GitHubContext) CloseOutput() (retErr error) {
 		log.Printf("[DEBUG] Wrote output: %s", key)
 	}
 
+	// Ensure data is flushed to disk before returning
+	if err := file.Sync(); err != nil {
+		log.Printf("[ERROR] Failed to sync GitHub output file: %s", err)
+		if retErr == nil {
+			retErr = err
+		}
+	}
+
 	gh.output = make(map[string]OutputWriter)
 	return
 }
