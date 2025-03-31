@@ -89,6 +89,9 @@ func (gh *GitHubContext) CloseOutput() (retErr error) {
 	for key, value := range gh.output {
 		strValue := value.String()
 
+		// Log each output value for troubleshooting
+		log.Printf("[DEBUG] Output value for '%s': '%s'", key, strValue)
+
 		var outputLine string
 		if value.MultiLine() || strings.Contains(strValue, "\n") {
 			outputLine = fmt.Sprintf("%s<<%s%s%s%s%s%s",
@@ -120,6 +123,11 @@ func (gh *GitHubContext) CloseOutput() (retErr error) {
 		}
 	}
 
+	// Write to stdout as well for debugging in GitHub Actions logs
+	for key, value := range gh.output {
+		fmt.Printf("::set-output name=%s::%s\n", key, value.String())
+	}
+
 	gh.output = make(map[string]OutputWriter)
 	return
 }
@@ -127,6 +135,17 @@ func (gh *GitHubContext) CloseOutput() (retErr error) {
 func newGitHubContext(getenv GetEnv) *GitHubContext {
 	runId := getenv("GITHUB_RUN_ID")
 	runNumber := getenv("GITHUB_RUN_NUMBER")
+	githubOutput := getenv("GITHUB_OUTPUT")
+
+	// Log all GitHub environment variables for debugging
+	log.Printf("[DEBUG] GitHub environment - GITHUB_RUN_ID: %s", runId)
+	log.Printf("[DEBUG] GitHub environment - GITHUB_RUN_NUMBER: %s", runNumber)
+	log.Printf("[DEBUG] GitHub environment - GITHUB_OUTPUT: %s", githubOutput)
+	log.Printf("[DEBUG] GitHub environment - GITHUB_SHA: %s", getenv("GITHUB_SHA"))
+	log.Printf("[DEBUG] GitHub environment - GITHUB_ACTOR: %s", getenv("GITHUB_ACTOR"))
+	log.Printf("[DEBUG] GitHub environment - GITHUB_REPOSITORY: %s", getenv("GITHUB_REPOSITORY"))
+	log.Printf("[DEBUG] GitHub environment - GITHUB_REF_NAME: %s", getenv("GITHUB_REF_NAME"))
+	log.Printf("[DEBUG] GitHub environment - GITHUB_REF_TYPE: %s", getenv("GITHUB_REF_TYPE"))
 
 	ghCtx := &GitHubContext{
 		runId:        runId,
@@ -136,7 +155,7 @@ func newGitHubContext(getenv GetEnv) *GitHubContext {
 		repository:   getenv("GITHUB_REPOSITORY"),
 		refName:      getenv("GITHUB_REF_NAME"),
 		refType:      getenv("GITHUB_REF_TYPE"),
-		githubOutput: getenv("GITHUB_OUTPUT"),
+		githubOutput: githubOutput,
 		runnerTemp:   getenv("RUNNER_TEMP"),
 		output:       make(map[string]OutputWriter),
 	}
@@ -145,6 +164,13 @@ func newGitHubContext(getenv GetEnv) *GitHubContext {
 
 	if ghCtx.githubOutput == "" {
 		log.Printf("[WARN] GITHUB_OUTPUT environment variable is not set. Outputs will not be available in GitHub Actions.")
+
+		// Fallback to legacy GITHUB_ENV if available (for older Actions versions)
+		legacyEnv := getenv("GITHUB_ENV")
+		if legacyEnv != "" {
+			log.Printf("[INFO] Using GITHUB_ENV as fallback for outputs: %s", legacyEnv)
+			ghCtx.githubOutput = legacyEnv
+		}
 	}
 
 	return ghCtx

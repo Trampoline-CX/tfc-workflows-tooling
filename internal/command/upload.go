@@ -74,8 +74,19 @@ func (c *UploadConfigurationCommand) Run(args []string) int {
 
 func (c *UploadConfigurationCommand) addConfigurationDetails(config *tfe.ConfigurationVersion) {
 	if config != nil {
+		// Log to help debug the configuration version details
+		log.Printf("[DEBUG] Configuration version ID: %s", config.ID)
+		log.Printf("[DEBUG] Configuration version status: %s", string(config.Status))
+		
+		// Add outputs that will be used by subsequent workflow steps
 		c.addOutput("configuration_version_id", config.ID)
 		c.addOutput("configuration_version_status", string(config.Status))
+		
+		// Explicitly log the output values to make troubleshooting easier
+		fmt.Printf("::set-output name=configuration_version_id::%s\n", config.ID)
+		fmt.Printf("::set-output name=configuration_version_status::%s\n", string(config.Status))
+	} else {
+		log.Printf("[WARN] Configuration version is nil, no outputs will be set")
 	}
 
 	c.addOutputWithOpts("payload", config, &outputOpts{

@@ -131,9 +131,16 @@ func (c *Meta) closeOutput() string {
 
 	// check to see if we're running in CI environment
 	if c.env.Context != nil {
+		// Log outputs for debugging
+		log.Printf("[DEBUG] Setting platform outputs: %v", platOutput)
+
 		// pass output data and close signifying we're done
 		c.env.Context.SetOutput(platOutput)
-		c.env.Context.CloseOutput()
+		if err := c.env.Context.CloseOutput(); err != nil {
+			log.Printf("[ERROR] Failed to close platform output: %s", err)
+		} else {
+			log.Printf("[DEBUG] Successfully closed platform output")
+		}
 	}
 
 	outJson, err := json.MarshalIndent(stdOutput, "", "  ")
