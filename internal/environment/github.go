@@ -91,13 +91,14 @@ func (gh *GitHubContext) CloseOutput() (retErr error) {
 
 		var outputLine string
 		if value.MultiLine() || strings.Contains(strValue, "\n") {
-			outputLine = fmt.Sprintf("%s<<%s%s%s%s%s",
+			outputLine = fmt.Sprintf("%s<<%s%s%s%s%s%s",
 				key,
 				gh.fileDelimeter,
 				EOF,
 				strValue,
 				EOF,
-				gh.fileDelimeter)
+				gh.fileDelimeter,
+				EOF)
 		} else {
 			outputLine = fmt.Sprintf("%s=%s%s", key, strValue, EOF)
 		}

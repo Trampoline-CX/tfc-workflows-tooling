@@ -20,7 +20,7 @@ test: log-test
 build: GOOS   = $(shell go env GOOS)
 build: GOARCH = $(shell go env GOARCH)
 build: log-build ## Build binary for current OS/ARCH
-	@ GOOS=$(GOOS) GOARCH=$(GOARCH) $(GOBUILD)
+	GOOS=$(GOOS) GOARCH=$(GOARCH) $(GOBUILD)
 
 .PHONY: docker
 docker: log-docker ## Build Docker image
