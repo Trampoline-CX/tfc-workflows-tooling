@@ -6,12 +6,12 @@ package command
 import (
 	"flag"
 	"fmt"
-	"log"
 	"path/filepath"
 	"strings"
 
 	"github.com/hashicorp/go-tfe"
 	"github.com/hashicorp/tfci/internal/cloud"
+	"github.com/hashicorp/tfci/internal/logging"
 )
 
 type UploadConfigurationCommand struct {
@@ -37,7 +37,11 @@ func (c *UploadConfigurationCommand) Run(args []string) int {
 		return 1
 	}
 
-	log.Printf("[DEBUG] uploading configuration with, workspace: %s, directory: %s, speculative: %t, provisional: %t", c.Workspace, c.Directory, c.Speculative, c.Provisional)
+	logging.Debug("Uploading configuration", 
+		"workspace", c.Workspace,
+		"directory", c.Directory,
+		"speculative", c.Speculative,
+		"provisional", c.Provisional)
 
 	dirPath, dirError := filepath.Abs(c.Directory)
 	if dirError != nil {
@@ -47,7 +51,7 @@ func (c *UploadConfigurationCommand) Run(args []string) int {
 		return 1
 	}
 
-	log.Printf("[DEBUG] target directory for configuration upload: %s", dirPath)
+	logging.Debug("Target directory for configuration upload", "path", dirPath)
 
 	configVersion, cvError := c.cloud.UploadConfig(c.appCtx, cloud.UploadOptions{
 		Workspace:              c.Workspace,
@@ -74,8 +78,20 @@ func (c *UploadConfigurationCommand) Run(args []string) int {
 
 func (c *UploadConfigurationCommand) addConfigurationDetails(config *tfe.ConfigurationVersion) {
 	if config != nil {
+		// Log to help debug the configuration version details
+		logging.Debug("Configuration version details", 
+			"id", config.ID, 
+			"status", string(config.Status))
+		
+		// Add outputs that will be used by subsequent workflow steps
 		c.addOutput("configuration_version_id", config.ID)
 		c.addOutput("configuration_version_status", string(config.Status))
+		
+		// Explicitly log the output values to make troubleshooting easier
+		fmt.Printf("::set-output name=configuration_version_id::%s\n", config.ID)
+		fmt.Printf("::set-output name=configuration_version_status::%s\n", string(config.Status))
+	} else {
+		logging.Warn("Configuration version is nil, no outputs will be set")
 	}
 
 	c.addOutputWithOpts("payload", config, &outputOpts{
