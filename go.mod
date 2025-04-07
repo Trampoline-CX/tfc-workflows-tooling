@@ -3,16 +3,15 @@ module github.com/hashicorp/tfci
 go 1.23
 
 require (
-	github.com/hashicorp/go-hclog v1.6.3
 	github.com/hashicorp/go-tfe v1.76.0
 	github.com/mitchellh/cli v1.1.5
 	github.com/sethvargo/go-retry v0.3.0
 	go.uber.org/mock v0.5.0
+	go.uber.org/zap v1.27.0
 )
 
 require (
 	go.uber.org/multierr v1.11.0 // indirect
-	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
 )
 
@@ -31,7 +30,7 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.7.7 // indirect
 	github.com/hashicorp/go-slug v0.16.4 // indirect
 	github.com/hashicorp/go-version v1.7.0 // indirect
-	github.com/hashicorp/jsonapi v1.4.3-0.20250220162346-81a76b606f3e
+	github.com/hashicorp/jsonapi v1.5.0
 	github.com/huandu/xstrings v1.3.2 // indirect
 	github.com/imdario/mergo v0.3.11 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
