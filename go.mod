@@ -3,16 +3,15 @@ module github.com/hashicorp/tfci
 go 1.23
 
 require (
-	github.com/hashicorp/go-hclog v1.6.3
-	github.com/hashicorp/go-tfe v1.76.0
+	github.com/hashicorp/go-tfe v1.78.0
 	github.com/mitchellh/cli v1.1.5
 	github.com/sethvargo/go-retry v0.3.0
 	go.uber.org/mock v0.5.0
+	go.uber.org/zap v1.27.0
 )
 
 require (
 	go.uber.org/multierr v1.11.0 // indirect
-	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
 )
 
