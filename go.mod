@@ -1,10 +1,11 @@
 module github.com/hashicorp/tfci
 
-go 1.23
+go 1.23.0
+
 toolchain go1.24.1
 
 require (
-	github.com/hashicorp/go-tfe v1.78.0
+	github.com/hashicorp/go-tfe v1.79.0
 	github.com/mitchellh/cli v1.1.5
 	github.com/sethvargo/go-retry v0.3.0
 	go.uber.org/mock v0.5.2
