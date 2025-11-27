@@ -15,7 +15,7 @@ RUN useradd -u 10007 -s /bin/false tfciuser
 RUN mkdir -p /etc/ssl/certs && update-ca-certificates
 
 RUN go build \
-  -ldflags "-X 'github.com/hashicorp/tfci/version.Version=$VERSION' -s -w -extldflags '-static'" \
+  -ldflags "-s -w -extldflags '-static'" \
   -o /bin/app \
   .
 
