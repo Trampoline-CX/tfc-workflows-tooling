@@ -5,7 +5,7 @@ go 1.24.0
 toolchain go1.24.1
 
 require (
-	github.com/hashicorp/go-tfe v1.97.0
+	github.com/hashicorp/go-tfe v1.98.0
 	github.com/mitchellh/cli v1.1.5
 	github.com/sethvargo/go-retry v0.3.0
 	go.uber.org/mock v0.6.0
